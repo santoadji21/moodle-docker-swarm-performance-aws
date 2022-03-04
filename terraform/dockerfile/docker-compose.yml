@@ -1,0 +1,5 @@
+version: '3'
+services:
+  moodle:
+    build: .
+    image: adji21/moodle:p-81

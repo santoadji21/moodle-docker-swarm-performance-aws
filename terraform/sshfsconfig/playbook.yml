@@ -1,0 +1,155 @@
+####################################################################
+# Authors: Ahmad Aji Santoso
+# Email: ahmad21@student.ub.ac.id
+####################################################################
+
+---
+- name: Generate Keys between servers
+  hosts: workers
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: Remove SSH Key If Exists
+      tags: run
+      shell: >
+        sudo rm -rf /root/.ssh/id_rsa
+
+    - name: SSH KeyGen command
+      tags: run
+      shell: >
+        sudo echo -e "\n"|ssh-keygen -t rsa -N ""
+
+    - name: Show SSH Key
+      tags: run
+      shell: >
+        sudo cat /root/.ssh/id_rsa.pub
+      register: ssh_key
+
+    - name: Show Results
+      debug:
+        var: ssh_key.stdout
+
+    - name: Show Errors
+      debug:
+        var: ssh_key.stderr
+
+- name: Copy SshKey To SSHFS Server
+  hosts: moodle
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  vars:
+    sshkey_worker1: "{{ hostvars[groups['workers'][0]]['ssh_key']['stdout'] }}"
+    sshkey_worker2: "{{ hostvars[groups['workers'][1]]['ssh_key']['stdout'] }}"
+    sshkey_worker3: "{{ hostvars[groups['workers'][2]]['ssh_key']['stdout'] }}"
+    sshkey_worker4: "{{ hostvars[groups['workers'][3]]['ssh_key']['stdout'] }}"
+  tasks:
+    - name: Add Worker1 sshkey to sshfs
+      authorized_key:
+        user: root
+        path: /root/.ssh/authorized_keys
+        key: "{{ sshkey_worker1 }}"
+
+    - name: Add Worker2 sshkey to sshfs
+      authorized_key:
+        user: root
+        path: /root/.ssh/authorized_keys
+        key: "{{ sshkey_worker2 }}"
+
+    - name: Add Worker3 sshkey to sshfs
+      authorized_key:
+        user: root
+        path: /root/.ssh/authorized_keys
+        key: "{{ sshkey_worker3 }}"
+
+    - name: Add Worker4 sshkey to sshfs
+      authorized_key:
+        user: root
+        path: /root/.ssh/authorized_keys
+        key: "{{ sshkey_worker4 }}"
+
+    - name: Show SSH Key
+      tags: run
+      shell: >
+        sudo cat /root/.ssh/authorized_keys
+      register: authorized_keys
+
+    - name: Show Results
+      debug:
+        var: authorized_keys.stdout
+
+    - name: Show Errors
+      debug:
+        var: authorized_keys.stderr
+
+    - name: Make Folder Moodle & Moodledata
+      tags: run
+      shell: >
+        sudo mkdir -p /var/moodle_data/moodle && mkdir -p /var/moodle_data/moodledata
+      register: moodle_folder
+
+    - name: Make Permiison Moodle & Moodledata
+      tags: run
+      shell: >
+        chmod  -R 777 /var/moodle_data/moodle && chmod -R 777  /var/moodle_data/moodledata
+      register: changepermisson
+
+    - name: Show Results
+      debug:
+        var: moodle_folder.stdout
+
+    - name: Show Errors
+      debug:
+        var: moodle_folder.stderr
+
+    # - name: Make Folder Mariadb Data
+    #   tags: run
+    #   shell: >
+    #     sudo mkdir -p /var/mariadbdata
+    #   register: mariadb_folder
+
+    # - name: Make Permisson Mariadb Data
+    #   tags: run
+    #   shell: >
+    #     chmod -R 777 /var/mariadbdata
+    #   register: mariadb_folder
+
+    # - name: Show Results
+    #   debug:
+    #     var: mariadb_folder.stdout
+
+    # - name: Show Errors
+    #   debug:
+    #     var: mariadb_folder.stderr
+
+# - name: Set SSHFS on Manager
+#   hosts: managers
+#   become: true
+#   gather_facts: False
+#   remote_user: ubuntu
+#   tasks:
+
+#     - name: Disable Plugin SSHFS
+#       command: docker plugin disable vieux/sshfs:latest
+
+#     - name: Set SSH Path for Plugin SSHFS
+#       command: docker plugin set vieux/sshfs sshkey.source=/root/.ssh/
+
+#     - name: Enable Plugin SSHFS
+#       command: docker plugin enable vieux/sshfs:latest
+
+- name: Set SSHFS on Worker
+  hosts: workers
+  become: true
+  remote_user: ubuntu
+  gather_facts: False
+  tasks:
+    - name: Disable Plugin SSHFS
+      command: docker plugin disable vieux/sshfs:latest
+
+    - name: Set SSH Path for Plugin SSHFS
+      command: docker plugin set vieux/sshfs sshkey.source=/root/.ssh/
+
+    - name: Enable Plugin SSHFS
+      command: docker plugin enable vieux/sshfs:latest

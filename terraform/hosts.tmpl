@@ -1,0 +1,24 @@
+####################################################################
+# Authors: Ahmad Aji Santoso
+# Email: ahmad21@student.ub.ac.id
+####################################################################
+
+[managers]
+${manager} ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_user=ubuntu ansible_private_key_file=/vagrant/aws-terraform-swarm/moodle-singapore.pem
+
+[managerprivateip]
+${manager_private_ip}          # Manager Private ip for init and join docker swarm
+
+[workers]
+#ansible_user=ubuntu
+${worker1}  ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_user=ubuntu ansible_private_key_file=/vagrant/aws-terraform-swarm/moodle-singapore.pem
+${worker2}  ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_user=ubuntu ansible_private_key_file=/vagrant/aws-terraform-swarm/moodle-singapore.pem
+${worker3}  ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_user=ubuntu ansible_private_key_file=/vagrant/aws-terraform-swarm/moodle-singapore.pem
+${worker4}  ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_user=ubuntu ansible_private_key_file=/vagrant/aws-terraform-swarm/moodle-singapore.pem
+
+[moodle]
+${sshfs}  ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_user=ubuntu ansible_private_key_file=/vagrant/aws-terraform-swarm/moodle-singapore.pem
+
+
+[sshfs_private_ip]
+${sshfs_private_ip} 

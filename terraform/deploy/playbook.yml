@@ -1,0 +1,27 @@
+####################################################################
+# Authors: Ahmad Aji Santoso
+# Email: ahmad21@student.ub.ac.id
+####################################################################
+
+---
+- name: Deploy Moodle Service On Docker Swarm
+  hosts: managers
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: Create Docker Network
+      command: chdir=/home/ubuntu/mdl-stackfile make network 
+      register: docker_network
+
+    - name: Show Result
+      debug:
+        var: docker_network.stdout
+
+    - name: Running Stackfile
+      command: chdir=/home/ubuntu/mdl-stackfile make deploy
+      register: deploy
+
+    - name: Show Result
+      debug:
+        var: deploy.stdout

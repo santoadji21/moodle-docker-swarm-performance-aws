@@ -1,0 +1,47 @@
+{
+  "agent": {
+    "metrics_collection_interval": 30,
+    "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+  },
+  "metrics": {
+    "metrics_collected": {
+      "cpu": {
+        "resources": ["*"],
+        "measurement": [
+          {
+            "name": "cpu_usage_idle",
+            "rename": "CPU_USAGE_IDLE",
+            "unit": "Percent"
+          },
+          {
+            "name": "cpu_usage_iowait",
+            "rename": "CPU_USAGE_IOWAIT",
+            "unit": "Percent"
+          },
+          {
+            "name": "cpu_time_idle",
+            "rename": "CPU_TIME_IDLE",
+            "unit": "Percent"
+          },
+          {
+            "name": "cpu_time_iowait",
+            "rename": "CPU_TIME_IOWAIT",
+            "unit": "Percent"
+          }
+        ]
+      },
+      "mem": {
+        "measurement": [
+          { "name": "mem_free", "rename": "MEM_FREE", "unit": "Megabytes" },
+          { "name": "mem_total", "rename": "MEM_TOTAL", "unit": "Megabytes" },
+          { "name": "mem_used", "rename": "MEM_USED", "unit": "Megabytes" }
+        ]
+      }
+    },
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}",
+      "InstanceType": "${aws:InstanceType}"
+    },
+    "aggregation_dimensions": [["InstanceId", "InstanceType"]]
+  }
+}

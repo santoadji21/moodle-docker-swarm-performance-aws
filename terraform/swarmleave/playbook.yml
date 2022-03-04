@@ -1,0 +1,24 @@
+####################################################################
+# Authors: Ahmad Aji Santoso
+# Email: ahmad21@student.ub.ac.id
+####################################################################
+
+---
+- name: Worker Leave Node
+  hosts: workers
+  become: true
+  remote_user: ubuntu
+  gather_facts: False
+  tasks:
+    - name: Leave the Swarm
+      command: docker swarm leave --force
+
+- name: Manager Leave 
+  hosts: managers
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: Leave the Swarm
+      command: docker swarm leave --force
+

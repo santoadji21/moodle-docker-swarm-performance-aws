@@ -1,0 +1,38 @@
+####################################################################
+# Authors: Ahmad Aji Santoso
+# Email: ahmad21@student.ub.ac.id
+####################################################################
+
+---
+- name: Adding Hostname To /etc/hosts Manager
+  hosts: managers
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: SSH KeyGen command
+      tags: run
+      shell: > 
+        sudo echo $(hostname -I | cut -d\  -f1) $(hostname) | sudo tee -a /etc/hosts
+
+- name: Adding Hostname To /etc/hosts Worker
+  hosts: workers
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: SSH KeyGen command
+      tags: run
+      shell: > 
+        sudo echo $(hostname -I | cut -d\  -f1) $(hostname) | sudo tee -a /etc/hosts
+
+- name: Adding Hostname To /etc/hosts SSHFS
+  hosts: moodle
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: SSH KeyGen command
+      tags: run
+      shell: > 
+        sudo echo $(hostname -I | cut -d\  -f1) $(hostname) | sudo tee -a /etc/hosts

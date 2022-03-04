@@ -1,0 +1,185 @@
+# ####################################################################
+# # Authors: Ahmad Aji Santoso
+# # Email: ahmad21@student.ub.ac.id
+# ####################################################################
+
+---
+- name: Init Cloudwath Agent In  Manager
+  hosts: managers
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: Install Unzip
+      tags: run
+      shell: >
+        sudo apt-get install unzip -y && sudo apt install upstart -y
+      register: install_unzip
+
+    - name: Install Collectd
+      tags: run
+      shell: >
+        sudo apt-get update -y && sudo apt-get install collectd -y
+      register: install_collectd
+
+    - name: Create Directory for Downloading Cloudwatch Agent .zip
+      file:
+        path: "/opt/aws/amazon-cloudwatch-zip"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+        recurse: no
+
+    - name: Download Latest Version of Amazon Cloudwatch Agent
+      get_url:
+        url: "https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip"
+        dest: /opt/aws/amazon-cloudwatch-zip/AmazonCloudWatchAgent.zip
+        mode: 0755
+
+    - name: Unzip Cloudwatch Download File
+      unarchive:
+        remote_src: yes
+        src: /opt/aws/amazon-cloudwatch-zip/AmazonCloudWatchAgent.zip
+        dest: /opt/aws/amazon-cloudwatch-zip
+
+    - name: Execute the Installation Script
+      command: /opt/aws/amazon-cloudwatch-zip/install.sh
+      args:
+        chdir: /opt/aws/amazon-cloudwatch-zip
+
+    - name: Transfer Cloudwatch Configuration File
+      copy:
+        src: /vagrant/aws-terraform-swarm/swarm-cluster-6node/cloudwatch/amazon-cloudwatch-agent.json
+        dest: /opt/aws/amazon-cloudwatch-agent/etc
+        owner: ubuntu
+        group: ubuntu
+        mode: 0755
+
+    - name: Fecth Json Config
+      command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+      register: fetch_json
+
+    - name: Show Result
+      debug:
+        var: fetch_json.stdout
+
+- name: Init Cloudwath Agent In  Worker
+  hosts: workers
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: Install Unzip
+      tags: run
+      shell: >
+        sudo apt-get install unzip -y && sudo apt install upstart -y
+      register: install_unzip
+
+    - name: Install Collectd
+      tags: run
+      shell: >
+        sudo apt-get update -y && sudo apt-get install collectd -y
+      register: install_collectd
+
+    - name: Create Directory for Downloading Cloudwatch Agent .zip
+      file:
+        path: "/opt/aws/amazon-cloudwatch-zip"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+        recurse: no
+
+    - name: Download Latest Version of Amazon Cloudwatch Agent
+      get_url:
+        url: "https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip"
+        dest: /opt/aws/amazon-cloudwatch-zip/AmazonCloudWatchAgent.zip
+        mode: 0755
+
+    - name: Unzip Cloudwatch Download File
+      unarchive:
+        remote_src: yes
+        src: /opt/aws/amazon-cloudwatch-zip/AmazonCloudWatchAgent.zip
+        dest: /opt/aws/amazon-cloudwatch-zip
+
+    - name: Execute the Installation Script
+      command: /opt/aws/amazon-cloudwatch-zip/install.sh
+      args:
+        chdir: /opt/aws/amazon-cloudwatch-zip
+
+    - name: Transfer Cloudwatch Configuration File
+      copy:
+        src: /vagrant/aws-terraform-swarm/swarm-cluster-6node/cloudwatch/amazon-cloudwatch-agent.json
+        dest: /opt/aws/amazon-cloudwatch-agent/etc
+        owner: ubuntu
+        group: ubuntu
+        mode: 0755
+
+    - name: Fecth Json Config
+      command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+      register: fetch_json
+
+    - name: Show Result
+      debug:
+        var: fetch_json.stdout
+
+- name: Init Cloudwath Agent In SSHFS Server
+  hosts: moodle
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  tasks:
+    - name: Install Unzip
+      tags: run
+      shell: >
+        sudo apt-get install unzip -y && sudo apt install upstart -y
+      register: install_unzip
+
+    - name: Install Collectd
+      tags: run
+      shell: >
+        sudo apt-get update -y && sudo apt-get install collectd -y
+      register: install_collectd
+
+    - name: Create Directory for Downloading Cloudwatch Agent .zip
+      file:
+        path: "/opt/aws/amazon-cloudwatch-zip"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+        recurse: no
+
+    - name: Download Latest Version of Amazon Cloudwatch Agent
+      get_url:
+        url: "https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip"
+        dest: /opt/aws/amazon-cloudwatch-zip/AmazonCloudWatchAgent.zip
+        mode: 0755
+
+    - name: Unzip Cloudwatch Download File
+      unarchive:
+        remote_src: yes
+        src: /opt/aws/amazon-cloudwatch-zip/AmazonCloudWatchAgent.zip
+        dest: /opt/aws/amazon-cloudwatch-zip
+
+    - name: Execute the Installation Script
+      command: /opt/aws/amazon-cloudwatch-zip/install.sh
+      args:
+        chdir: /opt/aws/amazon-cloudwatch-zip
+
+    - name: Transfer Cloudwatch Configuration File
+      copy:
+        src: /vagrant/aws-terraform-swarm/swarm-cluster-6node/cloudwatch/amazon-cloudwatch-agent.json
+        dest: /opt/aws/amazon-cloudwatch-agent/etc
+        owner: ubuntu
+        group: ubuntu
+        mode: 0755
+
+    - name: Fecth Json Config
+      command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+      register: fetch_json
+
+    - name: Show Result
+      debug:
+        var: fetch_json.stdout

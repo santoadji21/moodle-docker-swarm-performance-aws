@@ -1,0 +1,150 @@
+####################################################################
+
+# ======== This file implements moodle using docker swarm ========
+
+# Authors: Ahmad Aji Santoso
+# Email: ahmad21@student.ub.ac.id
+####################################################################
+
+version: "3.8"
+
+services:
+  traefik:
+    image: "traefik:v2.4"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "80:8181"
+      - "8080:8080"
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.api.service=api@internal"
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+
+      placement:
+        constraints:
+          - node.role == manager
+    command:
+      - --log.level=DEBUG
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.useBindPortIP=true
+      - --providers.docker.watch=true
+      - --providers.docker.constraints=Label(`traefik.constraint-label`, `moodleworker`)
+      - --providers.docker.swarmModeRefreshSeconds=30s
+      - --entrypoints.web.address=:8181
+      - --api.dashboard=true
+      - --api.debug=true
+      - --providers.docker=true
+      - --providers.docker.swarmMode=true
+      - --providers.docker.network=traefik-proxy
+
+    networks:
+      - traefik-proxy
+
+  mariadb:
+    image: bitnami/mariadb:10.5.11-debian-10-r16
+    environment:
+      - BITNAMI_DEBUG=true
+      - MARIADB_EXTRA_FLAGS= --max_allowed_packet=256M
+      - MARIADB_USER=bn_moodle
+      - MARIADB_DATABASE=bitnami_moodle
+      - MARIADB_PASSWORD=bitnami
+      - ALLOW_EMPTY_PASSWORD=yes
+      - NAMI_LOG_LEVEL=trace8
+      - MARIADB_CHARACTER_SET=utf8mb4
+      - MARIADB_COLLATE=utf8mb4_unicode_ci
+    volumes:
+      - "mariadb_data_swm:/bitnami/mariadb"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == worker-1
+    networks:
+      - database
+
+  moodle:
+    image: adji21/moodle:deb-rc
+    environment:
+      - PHP_UPLOAD_MAX_FILESIZE=100M
+      - PHP_MEMORY_LIMIT=750M
+      - PHP_POST_MAX_SIZE=100M
+      - PHP_MAX_EXECUTION_TIME=120
+      #- MOODLE_SKIP_BOOTSTRAP=yes
+      #- MOODLE_SKIP_INSTALL=yes
+      - BITNAMI_DEBUG=true
+      - MOODLE_DATABASE_HOST=mariadb
+      - MOODLE_DATABASE_PORT_NUMBER=3306
+      - MOODLE_DATABASE_USER=bn_moodle
+      - MOODLE_DATABASE_NAME=bitnami_moodle
+      - MOODLE_DATABASE_PASSWORD=bitnami
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MOODLE_USERNAME=adji21
+      - MOODLE_PASSWORD=Adminadji21
+      - MOODLE_EMAIL=ikhwangaul21@gmail.com
+      - MOODLE_SITE_NAME='Moodle Cluster Docker Swarm'
+    volumes:
+      - "moodle_data_swm:/bitnami/moodle"
+      - "moodledata_data_swm:/bitnami/moodledata"
+    depends_on:
+      - mariadb
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.lbswarm=true"
+        - "traefik.docker.network=traefik-proxy"
+        - "traefik.http.routers.moodle.rule=Host(`lms.santoadji21.tech`)"
+        - "traefik.http.routers.moodle.entrypoints=web"
+        - "traefik.http.services.moodle.loadbalancer.server.scheme=http"
+        - "traefik.http.services.moodle.loadbalancer.server.port=8181"
+        - "traefik.http.services.moodle.loadbalancer.healthcheck.port=8181"
+        - "traefik.http.services.moodle.loadbalancer.healthcheck.scheme=http"
+        - "traefik.constraint-label=moodleworker"
+      restart_policy:
+        condition: on-failure
+      mode: replicated
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - node.labels.moodleworker == true
+
+    networks:
+      - database
+      - traefik-proxy
+
+networks:
+  database:
+    driver: overlay
+    external: true
+  traefik-proxy:
+    driver: overlay
+    external: true
+
+volumes:
+  mariadb_data_swm:
+    # driver: vieux/sshfs
+    # driver_opts:
+    #   sshcmd: "root@${sshfs_private_ip}:/var/mariadbdata"
+    #   allow_other: ""
+  moodle_data_swm:
+    driver: vieux/sshfs
+    driver_opts:
+      sshcmd: "root@${sshfs_private_ip}:/var/moodle_data/moodle"
+      allow_other: ""
+  moodledata_data_swm:
+    driver: vieux/sshfs
+    driver_opts:
+      sshcmd: "root@${sshfs_private_ip}:/var/moodle_data/moodledata"
+      allow_other: ""

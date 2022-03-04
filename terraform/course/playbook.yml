@@ -1,0 +1,55 @@
+####################################################################
+# Authors: Ahmad Aji Santoso
+# Email: ahmad21@student.ub.ac.id
+####################################################################
+
+---
+- name: Copy Course and User to moodledata
+  hosts: moodle
+  become: true
+  gather_facts: False
+  remote_user: ubuntu
+  vars:
+    dest_folder: "/var/moodle_data/moodledata/"
+    backup_course: "/vagrant/dataset/course/"
+  tasks:
+    - name: Create a directory repository
+      file:
+        path: "{{ dest_folder }}repository"
+        state: directory
+        mode: "0755"
+      register: main_folder
+
+    - name: Create a directory course
+      file:
+        path: "{{ main_folder.path }}/course"
+        state: directory
+        mode: "0755"
+      register: course_folder
+
+    - name: Create a directory user
+      file:
+        path: "{{ main_folder.path }}/user"
+        state: directory
+        mode: "0755"
+      register: user_folder
+
+    - name: Copy Backup Course Size S to course repository
+      copy:
+        src: "{{ backup_course }}moodle-course-test-size-s.mbz"
+        dest: "{{ course_folder.path }}"
+
+    # - name: Copy Backup Course Size M to course repository
+    #   copy:
+    #     src: "{{ backup_course }}moodle-course-test-size-m.mbz"
+    #     dest: "{{ course_folder.path }}"
+
+    # - name: Copy Backup Course Size L to course repository
+    #   copy:
+    #     src: "{{ backup_course }}moodle-course-test-size-l.mbz"
+    #     dest: "{{ course_folder.path }}"
+
+    - name: Copy Backup User  to user repository
+      copy:
+        src: /vagrant/dataset/testuser.csv
+        dest: "{{ user_folder.path }}"
